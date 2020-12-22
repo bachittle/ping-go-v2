@@ -24,7 +24,7 @@ func (c *Controller) Init() {
 }
 
 // SendAndRecv sends data with the sender and receives data with the capturer
-func (c Controller) SendAndRecv(timeout time.Duration) {
+func (c Controller) SendAndRecv(timeout time.Duration) map[string]bool {
 	c.cap.Init(3)
 	chanIP := c.cap.CaptureIPs(nil)
 	chanInt := make(chan int)
@@ -52,11 +52,11 @@ func (c Controller) SendAndRecv(timeout time.Duration) {
 	}()
 	if n == 0 {
 		chanInt <- 1
-		return
+		return nil
 	}
 	time.Sleep(timeout)
 	fmt.Println("IPs found:", len(dict))
 	fmt.Println(dict)
 	chanInt <- 1
-	return
+	return dict
 }
