@@ -52,7 +52,7 @@ func (c Controller) SendAndRecv(timeout time.Duration) map[string]bool {
 	}()
 	if n == 0 {
 		chanInt <- 1
-		return nil
+		return dict
 	}
 	time.Sleep(timeout)
 	fmt.Println("IPs found:", len(dict))
