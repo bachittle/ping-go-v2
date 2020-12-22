@@ -39,6 +39,6 @@ func TestCapture(t *testing.T) {
 	var c Capturer
 	c.Init(3)
 	ch := make(chan int, 1)
-	c.CaptureIPs(&ch)
+	c.CaptureIPs(&ch, 1)
 	ch <- 1
 }

@@ -11,7 +11,8 @@ func TestSend(t *testing.T) {
 	}
 	s.DstIPs = append(s.DstIPs, CustomIP{net.IP{192, 168, 50, 1}, nil})
 
-	s.SendOne()
+	id := 123
+	s.SendOne(id)
 
 	s = Sender{
 		SrcIP: net.IP{192, 168, 50, 77},
@@ -19,5 +20,5 @@ func TestSend(t *testing.T) {
 	n := 24
 	s.DstIPs = append(s.DstIPs, CustomIP{net.IP{192, 168, 50, 1}, &n})
 
-	s.SendOne()
+	s.SendOne(id)
 }

@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"golang.org/x/net/icmp"
 	"golang.org/x/net/ipv4"
-	"math/rand"
 	"net"
 )
 
@@ -15,8 +14,8 @@ type Sender struct {
 }
 
 // SendOne sends one packet to the specified SrcIP and DstIPs
-// returns the amount of successful IPs it sent to
-func (s Sender) SendOne() (int, error) {
+// returns the amount of successful IPs it sent to, and the random ID generated for checking
+func (s Sender) SendOne(id int) (int, error) {
 	conn, err := icmp.ListenPacket("ip:icmp", fmt.Sprint(s.SrcIP))
 	n := 0
 	if err != nil {
@@ -27,7 +26,7 @@ func (s Sender) SendOne() (int, error) {
 		Type: ipv4.ICMPTypeEcho,
 		Code: 0,
 		Body: &icmp.Echo{
-			ID:   rand.Intn(65535),
+			ID:   id,
 			Seq:  1,
 			Data: []byte(""),
 		},

@@ -1,7 +1,6 @@
 package ping2
 
 import (
-	"bytes"
 	"fmt"
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
@@ -43,8 +42,9 @@ func (c *Capturer) Init(index int) error {
 // CaptureIPs captures from the specified IP addresses in IPs
 // it does this asynchronously, and returns captured echo replies to a returned channel
 // you can close the channel with the optional parameter channel. Just pass it a number.
-func (c Capturer) CaptureIPs(stopChan *chan int) chan net.IP {
-	ch := make(chan net.IP)
+func (c Capturer) CaptureIPs(stopChan *chan int, id uint16) chan net.IP {
+	ch2 := make(chan net.IP)
+	//fmt.Println("chan2:", ch2)
 	go func() {
 		handle, err := pcap.OpenLive(c.Iface.Name, 1600, true, pcap.BlockForever)
 		if err != nil {
@@ -53,6 +53,7 @@ func (c Capturer) CaptureIPs(stopChan *chan int) chan net.IP {
 		defer handle.Close()
 		c.handle = handle
 		packetSource := gopacket.NewPacketSource(handle, handle.LinkType())
+		//fmt.Println("starting packet receiver...")
 		for packet := range packetSource.Packets() {
 			if stopChan != nil {
 				// in the loop, if stopChan is ever given any values, break the loop.
@@ -69,23 +70,24 @@ func (c Capturer) CaptureIPs(stopChan *chan int) chan net.IP {
 				if !ok {
 					panic(err)
 				}
-				for ip := range GenerateIPs(c.IPs) {
-					ipLayer, ok := ipLayer.(*layers.IPv4)
-					if !ok {
-						panic(err)
-					}
-					if icmpLayer.TypeCode.Type() != 0 || icmpLayer.TypeCode.Code() != 0 {
-						break
-					}
-					if bytes.Equal(ipLayer.SrcIP, ip) {
-						var ip2 net.IP
-						ip2 = append(ip2, ip...)
-						ch <- ip2
-					}
+				ipLayer, ok := ipLayer.(*layers.IPv4)
+				if !ok {
+					panic(err)
 				}
+				ip := ipLayer.SrcIP
+				if icmpLayer.TypeCode.Type() != 0 || icmpLayer.TypeCode.Code() != 0 {
+					//fmt.Println("not a valid response")
+					//fmt.Println(icmpLayer.TypeCode.Type(), icmpLayer.TypeCode.Code())
+					continue
+				} else if icmpLayer.Id != id {
+					//fmt.Println("not a valid response")
+					//fmt.Println(icmpLayer.Id, "!=", id)
+					continue
+				}
+				//fmt.Println("valid match!")
+				ch2 <- ip
 			}
 		}
-		close(ch)
 	}()
-	return ch
+	return ch2
 }

@@ -2,6 +2,7 @@ package ping2
 
 import (
 	"fmt"
+	"math/rand"
 	"net"
 	"time"
 )
@@ -26,13 +27,14 @@ func (c *Controller) Init() {
 // SendAndRecv sends data with the sender and receives data with the capturer
 func (c Controller) SendAndRecv(timeout time.Duration) map[string]bool {
 	c.cap.Init(3)
-	chanIP := c.cap.CaptureIPs(nil)
+	id := rand.Intn(65535)
 	chanInt := make(chan int)
-	n, err := c.sen.SendOne()
-	fmt.Println("n:", n)
+	chanIP := c.cap.CaptureIPs(nil, uint16(id))
+	n, err := c.sen.SendOne(id)
 	if err != nil {
 		panic(err)
 	}
+	//fmt.Println("n:", n)
 
 	dict := make(map[string]bool)
 
@@ -40,14 +42,16 @@ func (c Controller) SendAndRecv(timeout time.Duration) map[string]bool {
 		var ip net.IP
 	Loop:
 		for {
+			//fmt.Println("in loop...")
 			select {
 			case <-chanInt:
 				break Loop
 			case ip = <-chanIP:
+				//fmt.Println("ip:", ip)
+				dict[ip.String()] = true
+				n--
+				break
 			}
-			fmt.Println("got ip:", ip)
-			dict[ip.String()] = true
-			n--
 		}
 	}()
 	if n == 0 {
@@ -56,7 +60,7 @@ func (c Controller) SendAndRecv(timeout time.Duration) map[string]bool {
 	}
 	time.Sleep(timeout)
 	fmt.Println("IPs found:", len(dict))
-	fmt.Println(dict)
+	//fmt.Println(dict)
 	chanInt <- 1
 	return dict
 }
